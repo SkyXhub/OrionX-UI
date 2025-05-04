@@ -1,4 +1,4 @@
-
+sssss
 
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
@@ -68,7 +68,8 @@ local OrionLib = {
                 ToggleButton = nil,
                 ToggleVisible = true,
                 TogglePosition = "TopRight",
-                WindowVisible = true
+                WindowVisible = true, -- Default window visibility (true = show window by default)
+                MainWindow = nil     -- Reference to main window
         }
 }
 
@@ -950,35 +951,17 @@ function OrionLib:Init()
         
         -- Initialize mobile UI if on a mobile device
         if OrionLib.Mobile.Enabled and OrionLib.Mobile.ToggleVisible then
-                -- Find the main window to toggle
-                local mainWindow = nil
-                for _, child in pairs(Orion:GetChildren()) do
-                    if child:IsA("Frame") and child.Name ~= "NotificationHolder" then
-                        mainWindow = child
-                        break
-                    end
-                end
+                -- Will find the main window once it's created and initialize the toggle button later
+                -- This ensures proper window reference and visibility settings
+                -- The actual initialization happens in MakeWindow function after the window is created
                 
-                if mainWindow then
-                    -- Store reference to main window
-                    OrionLib.Mobile.MainWindow = mainWindow
-                    
-                    -- Create toggle button
-                    local toggleButton = OrionLib.Mobile:CreateToggleButton(mainWindow)
-                    
-                    -- Set window visibility based on initial setting
-                    mainWindow.Visible = OrionLib.Mobile.WindowVisible
-                    
-                    -- Notify user about mobile mode
-                    if not OrionLib.Mobile.WindowVisible then
-                        OrionLib:MakeNotification({
-                            Name = "Mobile Mode",
-                            Content = "Use the menu button to show/hide the interface",
-                            Image = "rbxassetid://7733960612", -- Menu icon
-                            Time = 5
-                        })
-                    end
-                end
+                -- Notify user about mobile mode
+                OrionLib:MakeNotification({
+                    Name = "Mobile Mode",
+                    Content = "Interface optimized for touch. A toggle button will appear.",
+                    Image = "rbxassetid://7733960612", -- Menu icon
+                    Time = 5
+                })
         end
 end     
 
@@ -1122,7 +1105,8 @@ function OrionLib:MakeWindow(WindowConfig)
                 Parent = Orion,
                 Position = UDim2.new(0.5, -307, 0.5, -172),
                 Size = UDim2.new(0, 615, 0, 344),
-                ClipsDescendants = true
+                ClipsDescendants = true,
+                Name = "MainWindow"
         }), {
                 --SetProps(MakeElement("Image", "rbxassetid://3523728077"), {
                 --      AnchorPoint = Vector2.new(0.5, 0.5),
@@ -1272,7 +1256,27 @@ function OrionLib:MakeWindow(WindowConfig)
 
         if WindowConfig.IntroEnabled then
                 LoadSequence()
-        end     
+        end
+        
+        -- Initialize mobile UI if on a mobile device (after window is created)
+        if OrionLib.Mobile.Enabled and OrionLib.Mobile.ToggleVisible then
+                -- Store reference to main window
+                OrionLib.Mobile.MainWindow = MainWindow
+                
+                -- Create toggle button
+                local toggleButton = OrionLib.Mobile:CreateToggleButton(MainWindow)
+                
+                -- Set window visibility based on initial setting
+                MainWindow.Visible = OrionLib.Mobile.WindowVisible
+                
+                -- Notify user about mobile mode toggle
+                OrionLib:MakeNotification({
+                    Name = "Mobile Controls",
+                    Content = "Use the menu button to show/hide the interface",
+                    Image = "rbxassetid://7733960612", -- Menu icon
+                    Time = 3
+                })
+        end
 
         local TabFunction = {}
         function TabFunction:MakeTab(TabConfig)

@@ -1,4 +1,5 @@
---- addd
+
+
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
@@ -20,12 +21,56 @@ local OrionLib = {
                         Text = Color3.fromRGB(245, 245, 255),      -- Crisp white text
                         TextDark = Color3.fromRGB(165, 165, 185),  -- Improved subtitles
                         Accent = Color3.fromRGB(100, 125, 255)     -- Blue accent color
+                },
+                Ocean = {
+                        Main = Color3.fromRGB(20, 30, 45),
+                        Second = Color3.fromRGB(30, 40, 60),
+                        Stroke = Color3.fromRGB(45, 65, 90),
+                        Divider = Color3.fromRGB(45, 65, 90),
+                        Text = Color3.fromRGB(230, 240, 245), 
+                        TextDark = Color3.fromRGB(150, 170, 190),
+                        Accent = Color3.fromRGB(40, 100, 185)
+                },
+                Dark = {
+                        Main = Color3.fromRGB(15, 15, 15),
+                        Second = Color3.fromRGB(25, 25, 25),
+                        Stroke = Color3.fromRGB(40, 40, 40),
+                        Divider = Color3.fromRGB(40, 40, 40),
+                        Text = Color3.fromRGB(240, 240, 240),
+                        TextDark = Color3.fromRGB(160, 160, 160),
+                        Accent = Color3.fromRGB(100, 100, 100)
+                },
+                Light = {
+                        Main = Color3.fromRGB(230, 230, 230),
+                        Second = Color3.fromRGB(240, 240, 240),
+                        Stroke = Color3.fromRGB(200, 200, 200),
+                        Divider = Color3.fromRGB(200, 200, 200),
+                        Text = Color3.fromRGB(50, 50, 50),
+                        TextDark = Color3.fromRGB(100, 100, 100),
+                        Accent = Color3.fromRGB(120, 180, 220)
+                },
+                Blood = {
+                        Main = Color3.fromRGB(45, 15, 20),
+                        Second = Color3.fromRGB(60, 25, 30),
+                        Stroke = Color3.fromRGB(90, 40, 45),
+                        Divider = Color3.fromRGB(90, 40, 45),
+                        Text = Color3.fromRGB(240, 220, 220),
+                        TextDark = Color3.fromRGB(180, 140, 140),
+                        Accent = Color3.fromRGB(185, 60, 60)
                 }
         },
         SelectedTheme = "Default",
         Folder = nil,
         SaveCfg = false,
-        SkyXVersion = "1.0.0"
+        SkyXVersion = "1.0.0",
+        Mobile = {
+                Enabled = false,
+                ToggleButton = nil,
+                ToggleVisible = true,
+                TogglePosition = "TopRight",
+                WindowVisible = true, -- Default window visibility (true = show window by default)
+                MainWindow = nil     -- Reference to main window
+        }
 }
 
 --Feather Icons https://github.com/evoincorp/lucideblox/tree/master/src/modules/util - Created by 7kayoh
@@ -228,6 +273,36 @@ local function LoadCfg(Config)
                         warn("Orion Library Config Loader - Could not find ", a ,b)
                 end
         end)
+end
+
+-- Add custom themes system
+function OrionLib.Themes:AddTheme(themeName, themeColors)
+    if self[themeName] then
+        warn("Theme '" .. themeName .. "' already exists. Overwriting...")
+    end
+    
+    -- Ensure theme has all required color properties
+    local requiredColors = {"Main", "Second", "Stroke", "Divider", "Text", "TextDark", "Accent"}
+    for _, colorName in ipairs(requiredColors) do
+        if not themeColors[colorName] then
+            warn("Theme '" .. themeName .. "' is missing '" .. colorName .. "' color. Using default.")
+            themeColors[colorName] = self.Default[colorName]
+        end
+    end
+    
+    -- Add the theme
+    self[themeName] = themeColors
+    return self[themeName]
+end
+
+-- Add theme management function
+function OrionLib:SetTheme(themeName)
+    if self.Themes[themeName] then
+        self.SelectedTheme = themeName
+        SetTheme()
+    else
+        warn("Theme '" .. themeName .. "' does not exist")
+    end
 end
 
 -- Add animations system
@@ -819,10 +894,14 @@ function OrionLib:MakeNotification(NotificationConfig)
 end    
 
 function OrionLib:Init()
+        -- Check for mobile device
+        OrionLib.Mobile.Enabled = OrionLib.Mobile:DetectMobile()
+        
         -- Show SkyX startup notification
         OrionLib:MakeNotification({
                 Name = "SkyX UI Library",
-                Content = "This UI is made by SkyX Modded - Enhanced with modern theme and auto-save",
+                Content = "This UI is made by SkyX Modded - Enhanced with modern theme and auto-save" .. 
+                        (OrionLib.Mobile.Enabled and " - Mobile Mode" or ""),
                 Image = "rbxassetid://7733960981", -- Home icon
                 Time = 7
         })
@@ -868,6 +947,21 @@ function OrionLib:Init()
                                 end
                         end
                 end
+        end
+        
+        -- Initialize mobile UI if on a mobile device
+        if OrionLib.Mobile.Enabled and OrionLib.Mobile.ToggleVisible then
+                -- Will find the main window once it's created and initialize the toggle button later
+                -- This ensures proper window reference and visibility settings
+                -- The actual initialization happens in MakeWindow function after the window is created
+                
+                -- Notify user about mobile mode
+                OrionLib:MakeNotification({
+                    Name = "Mobile Mode",
+                    Content = "Interface optimized for touch. A toggle button will appear.",
+                    Image = "rbxassetid://7733960612", -- Menu icon
+                    Time = 5
+                })
         end
 end     
 
@@ -1011,7 +1105,8 @@ function OrionLib:MakeWindow(WindowConfig)
                 Parent = Orion,
                 Position = UDim2.new(0.5, -307, 0.5, -172),
                 Size = UDim2.new(0, 615, 0, 344),
-                ClipsDescendants = true
+                ClipsDescendants = true,
+                Name = "MainWindow"
         }), {
                 --SetProps(MakeElement("Image", "rbxassetid://3523728077"), {
                 --      AnchorPoint = Vector2.new(0.5, 0.5),
@@ -1161,7 +1256,27 @@ function OrionLib:MakeWindow(WindowConfig)
 
         if WindowConfig.IntroEnabled then
                 LoadSequence()
-        end     
+        end
+        
+        -- Initialize mobile UI if on a mobile device (after window is created)
+        if OrionLib.Mobile.Enabled and OrionLib.Mobile.ToggleVisible then
+                -- Store reference to main window
+                OrionLib.Mobile.MainWindow = MainWindow
+                
+                -- Create toggle button
+                local toggleButton = OrionLib.Mobile:CreateToggleButton(MainWindow)
+                
+                -- Set window visibility based on initial setting
+                MainWindow.Visible = OrionLib.Mobile.WindowVisible
+                
+                -- Notify user about mobile mode toggle
+                OrionLib:MakeNotification({
+                    Name = "Mobile Controls",
+                    Content = "Use the menu button to show/hide the interface",
+                    Image = "rbxassetid://7733960612", -- Menu icon
+                    Time = 3
+                })
+        end
 
         local TabFunction = {}
         function TabFunction:MakeTab(TabConfig)
@@ -2298,6 +2413,116 @@ function OrionLib:SetupAnimations()
             }):Play()
         end
     }
+end
+
+-- Mobile support functions
+function OrionLib.Mobile:DetectMobile()
+    local UserInputService = game:GetService("UserInputService")
+    return UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+end
+
+function OrionLib.Mobile:SetToggleVisibility(visible)
+    self.ToggleVisible = visible
+end
+
+function OrionLib.Mobile:SetTogglePosition(position)
+    if position == "TopRight" or position == "TopLeft" or position == "BottomRight" or position == "BottomLeft" then
+        self.TogglePosition = position
+    else
+        warn("Invalid toggle position. Use: TopRight, TopLeft, BottomRight, or BottomLeft")
+    end
+end
+
+function OrionLib.Mobile:CreateToggleButton(mainFrame)
+    if self.ToggleButton then return self.ToggleButton end
+    
+    local ToggleButton = Create("ImageButton", {
+        Name = "MobileToggle",
+        Size = UDim2.new(0, 40, 0, 40),
+        Position = UDim2.new(0.95, -20, 0.05, 0),
+        AnchorPoint = Vector2.new(1, 0),
+        BackgroundColor3 = OrionLib.Themes[OrionLib.SelectedTheme].Accent,
+        BackgroundTransparency = 0.2,
+        Image = GetIcon("menu") or "rbxassetid://7733960612",
+        ImageColor3 = Color3.fromRGB(255, 255, 255),
+        ImageTransparency = 0,
+        AutoButtonColor = false,
+        Visible = self.ToggleVisible,
+        Parent = Orion
+    })
+    
+    Create("UICorner", {
+        CornerRadius = UDim.new(1, 0),
+        Parent = ToggleButton
+    })
+    
+    -- Position the toggle button based on the configured position
+    if self.TogglePosition == "TopRight" then
+        ToggleButton.Position = UDim2.new(0.95, -20, 0.05, 0)
+        ToggleButton.AnchorPoint = Vector2.new(1, 0)
+    elseif self.TogglePosition == "TopLeft" then
+        ToggleButton.Position = UDim2.new(0.05, 20, 0.05, 0)
+        ToggleButton.AnchorPoint = Vector2.new(0, 0)
+    elseif self.TogglePosition == "BottomRight" then
+        ToggleButton.Position = UDim2.new(0.95, -20, 0.95, 0)
+        ToggleButton.AnchorPoint = Vector2.new(1, 1)
+    elseif self.TogglePosition == "BottomLeft" then
+        ToggleButton.Position = UDim2.new(0.05, 20, 0.95, 0)
+        ToggleButton.AnchorPoint = Vector2.new(0, 1)
+    end
+    
+    -- Create a drop shadow
+    local Shadow = Create("ImageLabel", {
+        Name = "Shadow",
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0.5, 0, 0.5, 0),
+        Size = UDim2.new(1, 10, 1, 10),
+        ZIndex = -1,
+        Image = "rbxassetid://6014261993", -- Drop shadow image
+        ImageColor3 = Color3.fromRGB(0, 0, 0),
+        ImageTransparency = 0.5,
+        Parent = ToggleButton
+    })
+    
+    -- Add toggle functionality to the button
+    local mainWindow = mainFrame
+    
+    ToggleButton.MouseButton1Click:Connect(function()
+        self.WindowVisible = not self.WindowVisible
+        if mainWindow then
+            mainWindow.Visible = self.WindowVisible
+        end
+        
+        -- Rotate animation for toggle button
+        TweenService:Create(ToggleButton, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            Rotation = self.WindowVisible and 90 or 0
+        }):Play()
+    end)
+    
+    self.ToggleButton = ToggleButton
+    return ToggleButton
+end
+
+-- Additional touch input for sliders
+function OrionLib:EnhanceSliderWithTouchSupport(slider, input, min, max, increment, callback)
+    slider.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch then
+            local posX = input.Position.X - slider.AbsolutePosition.X
+            local percentage = math.clamp(posX / slider.AbsoluteSize.X, 0, 1)
+            local value = Round(math.floor(min + (max - min) * percentage), increment)
+            callback(value)
+        end
+    end)
+    
+    slider.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch then
+            local posX = input.Position.X - slider.AbsolutePosition.X
+            local percentage = math.clamp(posX / slider.AbsoluteSize.X, 0, 1)
+            local value = Round(math.floor(min + (max - min) * percentage), increment)
+            callback(value)
+        end
+    end)
 end
 
 function OrionLib:Destroy()

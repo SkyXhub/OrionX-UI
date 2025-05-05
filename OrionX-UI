@@ -14,63 +14,17 @@ local OrionLib = {
         Flags = {},
         Themes = {
                 Default = {
-                        Main = Color3.fromRGB(30, 30, 35),         -- Darker background
-                        Second = Color3.fromRGB(40, 40, 48),       -- Slightly lighter secondary
-                        Stroke = Color3.fromRGB(65, 65, 75),       -- More visible borders
-                        Divider = Color3.fromRGB(65, 65, 75),      -- Matching dividers
-                        Text = Color3.fromRGB(245, 245, 255),      -- Crisp white text
-                        TextDark = Color3.fromRGB(165, 165, 185),  -- Improved subtitles
-                        Accent = Color3.fromRGB(100, 125, 255)     -- Blue accent color
-                },
-                Ocean = {
-                        Main = Color3.fromRGB(20, 30, 45),
-                        Second = Color3.fromRGB(30, 40, 60),
-                        Stroke = Color3.fromRGB(45, 65, 90),
-                        Divider = Color3.fromRGB(45, 65, 90),
-                        Text = Color3.fromRGB(230, 240, 245), 
-                        TextDark = Color3.fromRGB(150, 170, 190),
-                        Accent = Color3.fromRGB(40, 100, 185)
-                },
-                Dark = {
-                        Main = Color3.fromRGB(15, 15, 15),
-                        Second = Color3.fromRGB(25, 25, 25),
-                        Stroke = Color3.fromRGB(40, 40, 40),
-                        Divider = Color3.fromRGB(40, 40, 40),
+                        Main = Color3.fromRGB(25, 25, 25),
+                        Second = Color3.fromRGB(32, 32, 32),
+                        Stroke = Color3.fromRGB(60, 60, 60),
+                        Divider = Color3.fromRGB(60, 60, 60),
                         Text = Color3.fromRGB(240, 240, 240),
-                        TextDark = Color3.fromRGB(160, 160, 160),
-                        Accent = Color3.fromRGB(100, 100, 100)
-                },
-                Light = {
-                        Main = Color3.fromRGB(230, 230, 230),
-                        Second = Color3.fromRGB(240, 240, 240),
-                        Stroke = Color3.fromRGB(200, 200, 200),
-                        Divider = Color3.fromRGB(200, 200, 200),
-                        Text = Color3.fromRGB(50, 50, 50),
-                        TextDark = Color3.fromRGB(100, 100, 100),
-                        Accent = Color3.fromRGB(120, 180, 220)
-                },
-                Blood = {
-                        Main = Color3.fromRGB(45, 15, 20),
-                        Second = Color3.fromRGB(60, 25, 30),
-                        Stroke = Color3.fromRGB(90, 40, 45),
-                        Divider = Color3.fromRGB(90, 40, 45),
-                        Text = Color3.fromRGB(240, 220, 220),
-                        TextDark = Color3.fromRGB(180, 140, 140),
-                        Accent = Color3.fromRGB(185, 60, 60)
+                        TextDark = Color3.fromRGB(150, 150, 150)
                 }
         },
         SelectedTheme = "Default",
         Folder = nil,
-        SaveCfg = false,
-        SkyXVersion = "1.0.0",
-        Mobile = {
-                Enabled = false,
-                ToggleButton = nil,
-                ToggleVisible = true,
-                TogglePosition = "TopRight",
-                WindowVisible = true, -- Default window visibility (true = show window by default)
-                MainWindow = nil     -- Reference to main window
-        }
+        SaveCfg = false
 }
 
 --Feather Icons https://github.com/evoincorp/lucideblox/tree/master/src/modules/util - Created by 7kayoh
@@ -275,378 +229,6 @@ local function LoadCfg(Config)
         end)
 end
 
--- Add custom themes system
-function OrionLib.Themes:AddTheme(themeName, themeColors)
-    if self[themeName] then
-        warn("Theme '" .. themeName .. "' already exists. Overwriting...")
-    end
-    
-    -- Ensure theme has all required color properties
-    local requiredColors = {"Main", "Second", "Stroke", "Divider", "Text", "TextDark", "Accent"}
-    for _, colorName in ipairs(requiredColors) do
-        if not themeColors[colorName] then
-            warn("Theme '" .. themeName .. "' is missing '" .. colorName .. "' color. Using default.")
-            themeColors[colorName] = self.Default[colorName]
-        end
-    end
-    
-    -- Add the theme
-    self[themeName] = themeColors
-    return self[themeName]
-end
-
--- Add theme management function
-function OrionLib:SetTheme(themeName)
-    if self.Themes[themeName] then
-        self.SelectedTheme = themeName
-        SetTheme()
-    else
-        warn("Theme '" .. themeName .. "' does not exist")
-    end
-end
-
--- Add animations system
-OrionLib.Animations = {
-    Enabled = true,
-    Speed = 1.0,  -- Animation speed multiplier
-    Queue = {}    -- Animation queue
-}
-
--- Animation presets
-OrionLib.AnimationPresets = {
-    TabSwitch = function(oldTab, newTab, container)
-        if not OrionLib.Animations.Enabled then 
-            if oldTab then oldTab.Visible = false end
-            if newTab then newTab.Visible = true end
-            return 
-        end
-        
-        if oldTab then
-            -- Fade out old tab
-            TweenService:Create(oldTab, TweenInfo.new(0.2 * OrionLib.Animations.Speed, Enum.EasingStyle.Quad), {
-                BackgroundTransparency = 1,
-                Position = UDim2.new(0.05, 0, 0, oldTab.Position.Y.Offset)
-            }):Play()
-            
-            wait(0.1 * OrionLib.Animations.Speed)
-            oldTab.Visible = false
-        end
-        
-        if newTab then
-            -- Prepare new tab
-            newTab.BackgroundTransparency = 1
-            newTab.Position = UDim2.new(-0.05, 0, 0, newTab.Position.Y.Offset)
-            newTab.Visible = true
-            
-            -- Fade in new tab
-            TweenService:Create(newTab, TweenInfo.new(0.3 * OrionLib.Animations.Speed, Enum.EasingStyle.Quad), {
-                BackgroundTransparency = 0,
-                Position = UDim2.new(0, 0, 0, newTab.Position.Y.Offset)
-            }):Play()
-        end
-    end,
-    
-    ButtonPress = function(button)
-        if not OrionLib.Animations.Enabled then return end
-        
-        -- Store original properties
-        local originalColor = button.BackgroundColor3
-        local originalSize = button.Size
-        local originalPosition = button.Position
-        
-        -- Compute new size (slightly smaller)
-        local newSize = UDim2.new(
-            originalSize.X.Scale * 0.95,
-            originalSize.X.Offset * 0.95,
-            originalSize.Y.Scale * 0.95,
-            originalSize.Y.Offset * 0.95
-        )
-        
-        -- Adjust position to keep button centered during animation
-        local xOffset = (originalSize.X.Offset - newSize.X.Offset) / 2
-        local yOffset = (originalSize.Y.Offset - newSize.Y.Offset) / 2
-        
-        local newPosition = UDim2.new(
-            originalPosition.X.Scale,
-            originalPosition.X.Offset + xOffset,
-            originalPosition.Y.Scale,
-            originalPosition.Y.Offset + yOffset
-        )
-        
-        -- Darker color for press effect
-        local darkColor = Color3.new(
-            math.max(0, originalColor.R - 0.05),
-            math.max(0, originalColor.G - 0.05),
-            math.max(0, originalColor.B - 0.05)
-        )
-        
-        -- Press animation
-        TweenService:Create(button, TweenInfo.new(0.1 * OrionLib.Animations.Speed, Enum.EasingStyle.Quad), {
-            BackgroundColor3 = darkColor,
-            Size = newSize,
-            Position = newPosition
-        }):Play()
-        
-        -- Restore original state
-        wait(0.1 * OrionLib.Animations.Speed)
-        TweenService:Create(button, TweenInfo.new(0.2 * OrionLib.Animations.Speed, Enum.EasingStyle.Elastic), {
-            BackgroundColor3 = originalColor,
-            Size = originalSize,
-            Position = originalPosition
-        }):Play()
-    end,
-    
-    NotificationIn = function(notification)
-        if not OrionLib.Animations.Enabled then 
-            notification.Visible = true
-            return 
-        end
-        
-        -- Store original position
-        local originalPosition = notification.Position
-        
-        -- Set up for animation
-        notification.Position = UDim2.new(1, 0, originalPosition.Y.Scale, originalPosition.Y.Offset)
-        notification.BackgroundTransparency = 1
-        notification.Visible = true
-        
-        -- Find text elements to animate
-        local textElements = {}
-        for _, child in pairs(notification:GetChildren()) do
-            if child:IsA("TextLabel") or child:IsA("TextButton") then
-                child.TextTransparency = 1
-                table.insert(textElements, child)
-            elseif child:IsA("ImageLabel") or child:IsA("ImageButton") then
-                child.ImageTransparency = 1
-                table.insert(textElements, child)
-            end
-        end
-        
-        -- Slide in
-        TweenService:Create(notification, TweenInfo.new(0.3 * OrionLib.Animations.Speed, Enum.EasingStyle.Quad), {
-            Position = originalPosition,
-            BackgroundTransparency = 0
-        }):Play()
-        
-        -- Fade in text elements with slight delay
-        wait(0.1 * OrionLib.Animations.Speed)
-        for _, element in ipairs(textElements) do
-            if element:IsA("TextLabel") or element:IsA("TextButton") then
-                TweenService:Create(element, TweenInfo.new(0.2 * OrionLib.Animations.Speed, Enum.EasingStyle.Quad), {
-                    TextTransparency = 0
-                }):Play()
-            elseif element:IsA("ImageLabel") or element:IsA("ImageButton") then
-                TweenService:Create(element, TweenInfo.new(0.2 * OrionLib.Animations.Speed, Enum.EasingStyle.Quad), {
-                    ImageTransparency = 0
-                }):Play()
-            end
-            wait(0.05 * OrionLib.Animations.Speed) -- Stagger effect
-        end
-    end,
-    
-    NotificationOut = function(notification)
-        if not OrionLib.Animations.Enabled then 
-            notification.Visible = false
-            return 
-        end
-        
-        -- Find text elements to animate
-        local textElements = {}
-        for _, child in pairs(notification:GetChildren()) do
-            if child:IsA("TextLabel") or child:IsA("TextButton") then
-                table.insert(textElements, child)
-            elseif child:IsA("ImageLabel") or child:IsA("ImageButton") then
-                table.insert(textElements, child)
-            end
-        end
-        
-        -- Fade out text elements
-        for _, element in ipairs(textElements) do
-            if element:IsA("TextLabel") or element:IsA("TextButton") then
-                TweenService:Create(element, TweenInfo.new(0.2 * OrionLib.Animations.Speed, Enum.EasingStyle.Quad), {
-                    TextTransparency = 1
-                }):Play()
-            elseif element:IsA("ImageLabel") or element:IsA("ImageButton") then
-                TweenService:Create(element, TweenInfo.new(0.2 * OrionLib.Animations.Speed, Enum.EasingStyle.Quad), {
-                    ImageTransparency = 1
-                }):Play()
-            end
-        end
-        
-        -- Slide out after text fades
-        wait(0.15 * OrionLib.Animations.Speed)
-        TweenService:Create(notification, TweenInfo.new(0.3 * OrionLib.Animations.Speed, Enum.EasingStyle.Quad), {
-            Position = UDim2.new(1, 0, notification.Position.Y.Scale, notification.Position.Y.Offset),
-            BackgroundTransparency = 1
-        }):Play()
-        
-        -- Hide after animation completes
-        wait(0.3 * OrionLib.Animations.Speed)
-        notification.Visible = false
-    end,
-    
-    WindowOpen = function(window)
-        if not OrionLib.Animations.Enabled then 
-            window.Visible = true
-            return 
-        end
-        
-        -- Store original size
-        local originalSize = window.Size
-        
-        -- Setup for animation
-        window.Size = UDim2.new(0, 0, 0, 0)
-        window.Position = UDim2.new(0.5, 0, 0.5, 0)
-        window.BackgroundTransparency = 1
-        window.Visible = true
-        
-        -- Grow animation
-        TweenService:Create(window, TweenInfo.new(0.4 * OrionLib.Animations.Speed, Enum.EasingStyle.Quad), {
-            Size = originalSize,
-            Position = UDim2.new(0.5, -originalSize.X.Offset/2, 0.5, -originalSize.Y.Offset/2),
-            BackgroundTransparency = 0
-        }):Play()
-        
-        -- Fade in all UI elements with a cascading effect
-        wait(0.2 * OrionLib.Animations.Speed)
-        local elements = {}
-        local function collectElements(parent)
-            for _, child in pairs(parent:GetChildren()) do
-                if child:IsA("TextLabel") or child:IsA("TextButton") then
-                    child.TextTransparency = 1
-                    table.insert(elements, {object = child, property = "TextTransparency"})
-                elseif child:IsA("ImageLabel") or child:IsA("ImageButton") then
-                    child.ImageTransparency = 1
-                    table.insert(elements, {object = child, property = "ImageTransparency"})
-                elseif child:IsA("Frame") or child:IsA("ScrollingFrame") then
-                    if child.BackgroundTransparency < 1 then
-                        child.BackgroundTransparency = 1
-                        table.insert(elements, {object = child, property = "BackgroundTransparency"})
-                    end
-                    collectElements(child)
-                end
-            end
-        end
-        
-        collectElements(window)
-        
-        -- Sort by Y position for cascading effect
-        table.sort(elements, function(a, b)
-            local aPos = a.object.AbsolutePosition.Y
-            local bPos = b.object.AbsolutePosition.Y
-            return aPos < bPos
-        end)
-        
-        -- Animate in with cascade
-        for i, element in ipairs(elements) do
-            local tweenInfo = TweenInfo.new(0.3 * OrionLib.Animations.Speed, Enum.EasingStyle.Quad)
-            local tweenGoal = {}
-            tweenGoal[element.property] = 0
-            
-            TweenService:Create(element.object, tweenInfo, tweenGoal):Play()
-            
-            -- Add slight delay between elements for cascade
-            if i % 3 == 0 then -- Group in threes for faster animation
-                wait(0.02 * OrionLib.Animations.Speed)
-            end
-        end
-    end
-}
-
--- Animation toggle function
-function OrionLib:SetAnimationsEnabled(enabled)
-    self.Animations.Enabled = enabled
-end
-
--- Animation speed adjustment
-function OrionLib:SetAnimationSpeed(speed)
-    self.Animations.Speed = math.clamp(speed, 0.1, 2.0)
-end
-
--- Enhanced auto-save system
-OrionLib.AutoSave = {
-    Enabled = true,
-    Interval = 30,          -- Save every 30 seconds
-    LastSave = 0,
-    PendingChanges = false,
-    Connection = nil,
-    BackupInterval = 300    -- Create backup every 5 minutes
-}
-
--- Initialize auto-save system
-function OrionLib:InitAutoSave()
-    if self.AutoSave.Connection then
-        self.AutoSave.Connection:Disconnect()
-    end
-    
-    self.AutoSave.LastSave = os.time()
-    self.AutoSave.PendingChanges = false
-    
-    -- Create a folder for backups if it doesn't exist
-    pcall(function()
-        if not isfolder(self.Folder .. "/backups") then
-            makefolder(self.Folder .. "/backups")
-        end
-    end)
-    
-    -- Create auto-save loop
-    self.AutoSave.Connection = game:GetService("RunService").Heartbeat:Connect(function()
-        if not self.AutoSave.Enabled then return end
-        
-        local currentTime = os.time()
-        local timeSinceLastSave = currentTime - self.AutoSave.LastSave
-        
-        -- Save if we have pending changes and enough time has passed
-        if self.AutoSave.PendingChanges and timeSinceLastSave >= self.AutoSave.Interval then
-            pcall(function()
-                self:SaveCfg(game.GameId)
-                self.AutoSave.LastSave = currentTime
-                self.AutoSave.PendingChanges = false
-            end)
-        end
-        
-        -- Create backup if needed
-        if timeSinceLastSave >= self.AutoSave.BackupInterval then
-            pcall(function()
-                -- Create timestamped backup
-                local timestamp = os.date("%Y%m%d_%H%M%S")
-                local Data = {}
-                
-                for i,v in pairs(self.Flags) do
-                    if v.Save then
-                        if v.Type == "Colorpicker" then
-                            Data[i] = PackColor(v.Value)
-                        else
-                            Data[i] = v.Value
-                        end
-                    end     
-                end
-                
-                writefile(self.Folder .. "/backups/backup_" .. timestamp .. ".txt", 
-                         tostring(HttpService:JSONEncode(Data)))
-                        
-                self.AutoSave.LastSave = currentTime
-            end)
-        end
-    end)
-    
-    -- Also save when the game is closing
-    game:BindToClose(function()
-        if self.AutoSave.Enabled and self.AutoSave.PendingChanges then
-            pcall(function()
-                self:SaveCfg(game.GameId)
-            end)
-        end
-    end)
-    
-    return self.AutoSave
-end
-
--- Mark changes for auto-save
-function OrionLib:MarkChangesForSave()
-    self.AutoSave.PendingChanges = true
-end
-
 local function SaveCfg(Name)
         local Data = {}
         for i,v in pairs(OrionLib.Flags) do
@@ -659,12 +241,6 @@ local function SaveCfg(Name)
                 end     
         end
         writefile(OrionLib.Folder .. "/" .. Name .. ".txt", tostring(HttpService:JSONEncode(Data)))
-        
-        -- Reset pending changes flag since we just saved
-        if OrionLib.AutoSave then
-            OrionLib.AutoSave.PendingChanges = false
-            OrionLib.AutoSave.LastSave = os.time()
-        end
 end
 
 local WhitelistedMouse = {Enum.UserInputType.MouseButton1, Enum.UserInputType.MouseButton2,Enum.UserInputType.MouseButton3}
@@ -824,26 +400,25 @@ function OrionLib:MakeNotification(NotificationConfig)
                         Parent = NotificationHolder
                 })
 
-                local NotificationFrame = SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(30, 30, 35), 0, 10), {
+                local NotificationFrame = SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(25, 25, 25), 0, 10), {
                         Parent = NotificationParent, 
                         Size = UDim2.new(1, 0, 0, 0),
                         Position = UDim2.new(1, -55, 0, 0),
                         BackgroundTransparency = 0,
                         AutomaticSize = Enum.AutomaticSize.Y
                 }), {
-                        MakeElement("Stroke", Color3.fromRGB(65, 65, 75), 1.2),
+                        MakeElement("Stroke", Color3.fromRGB(93, 93, 93), 1.2),
                         MakeElement("Padding", 12, 12, 12, 12),
                         SetProps(MakeElement("Image", NotificationConfig.Image), {
                                 Size = UDim2.new(0, 20, 0, 20),
-                                ImageColor3 = Color3.fromRGB(245, 245, 255),
+                                ImageColor3 = Color3.fromRGB(240, 240, 240),
                                 Name = "Icon"
                         }),
                         SetProps(MakeElement("Label", NotificationConfig.Name, 15), {
                                 Size = UDim2.new(1, -30, 0, 20),
                                 Position = UDim2.new(0, 30, 0, 0),
                                 Font = Enum.Font.GothamBold,
-                                Name = "Title",
-                                TextColor3 = Color3.fromRGB(245, 245, 255)
+                                Name = "Title"
                         }),
                         SetProps(MakeElement("Label", NotificationConfig.Content, 14), {
                                 Size = UDim2.new(1, 0, 0, 0),
@@ -851,61 +426,29 @@ function OrionLib:MakeNotification(NotificationConfig)
                                 Font = Enum.Font.GothamSemibold,
                                 Name = "Content",
                                 AutomaticSize = Enum.AutomaticSize.Y,
-                                TextColor3 = Color3.fromRGB(190, 190, 210),
+                                TextColor3 = Color3.fromRGB(200, 200, 200),
                                 TextWrapped = true
                         })
                 })
 
-                -- Use the notification animation system
-                if self.AnimationPresets and self.AnimationPresets.NotificationIn then
-                        self.AnimationPresets.NotificationIn(NotificationFrame)
-                else
-                        -- Fallback to original animation if system not available
-                        NotificationFrame.Visible = true
-                        TweenService:Create(NotificationFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quint), {Position = UDim2.new(0, 0, 0, 0)}):Play()
-                end
+                TweenService:Create(NotificationFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quint), {Position = UDim2.new(0, 0, 0, 0)}):Play()
 
-                wait(NotificationConfig.Time - 0.5)
-                
-                -- Use the notification out animation
-                if self.AnimationPresets and self.AnimationPresets.NotificationOut then
-                        self.AnimationPresets.NotificationOut(NotificationFrame)
-                else
-                        -- Fallback to original animation if system not available
-                        TweenService:Create(NotificationFrame.Icon, TweenInfo.new(0.4, Enum.EasingStyle.Quint), {ImageTransparency = 1}):Play()
-                        TweenService:Create(NotificationFrame, TweenInfo.new(0.8, Enum.EasingStyle.Quint), {BackgroundTransparency = 0.6}):Play()
-                        wait(0.3)
-                        TweenService:Create(NotificationFrame.UIStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quint), {Transparency = 0.9}):Play()
-                        TweenService:Create(NotificationFrame.Title, TweenInfo.new(0.6, Enum.EasingStyle.Quint), {TextTransparency = 0.4}):Play()
-                        TweenService:Create(NotificationFrame.Content, TweenInfo.new(0.6, Enum.EasingStyle.Quint), {TextTransparency = 0.5}):Play()
-                        wait(0.05)
-                        NotificationFrame:TweenPosition(UDim2.new(1, 20, 0, 0),'In','Quint',0.8,true)
-                end
-                
+                wait(NotificationConfig.Time - 0.88)
+                TweenService:Create(NotificationFrame.Icon, TweenInfo.new(0.4, Enum.EasingStyle.Quint), {ImageTransparency = 1}):Play()
+                TweenService:Create(NotificationFrame, TweenInfo.new(0.8, Enum.EasingStyle.Quint), {BackgroundTransparency = 0.6}):Play()
+                wait(0.3)
+                TweenService:Create(NotificationFrame.UIStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quint), {Transparency = 0.9}):Play()
+                TweenService:Create(NotificationFrame.Title, TweenInfo.new(0.6, Enum.EasingStyle.Quint), {TextTransparency = 0.4}):Play()
+                TweenService:Create(NotificationFrame.Content, TweenInfo.new(0.6, Enum.EasingStyle.Quint), {TextTransparency = 0.5}):Play()
+                wait(0.05)
+
+                NotificationFrame:TweenPosition(UDim2.new(1, 20, 0, 0),'In','Quint',0.8,true)
                 wait(1.35)
                 NotificationFrame:Destroy()
-                NotificationParent:Destroy()
-                
-                -- Mark config as changed for auto-save
-                if self.AutoSave and self.AutoSave.PendingChanges ~= nil then
-                        self:MarkChangesForSave()
-                end
         end)
 end    
 
 function OrionLib:Init()
-        -- Check for mobile device
-        OrionLib.Mobile.Enabled = OrionLib.Mobile:DetectMobile()
-        
-        -- Show SkyX startup notification
-        OrionLib:MakeNotification({
-                Name = "SkyX UI Library",
-                Content = "This UI is made by SkyX Modded - Enhanced with modern theme and auto-save" .. 
-                        (OrionLib.Mobile.Enabled and " - Mobile Mode" or ""),
-                Image = "rbxassetid://7733960981", -- Home icon
-                Time = 7
-        })
-        
         if OrionLib.SaveCfg then        
                 pcall(function()
                         if isfile(OrionLib.Folder .. "/" .. game.GameId .. ".txt") then
@@ -917,52 +460,7 @@ function OrionLib:Init()
                                 })
                         end
                 end)            
-        end
-        
-        -- Initialize auto-save system
-        if self.InitAutoSave then
-                self:InitAutoSave()
-        end
-        
-        -- Also save when the game is closing
-        game:BindToClose(function()
-                if self.SaveCfg and self.AutoSave and self.AutoSave.PendingChanges then
-                        pcall(function()
-                                self:SaveCfg(game.GameId)
-                        end)
-                end
-        end)
-        
-        -- Track changes in toggle and slider elements
-        for flagName, flag in pairs(self.Flags) do
-                if type(flag) == "table" and flag.Type then
-                        local originalSet = flag.Set
-                        if originalSet then
-                                flag.Set = function(...)
-                                        local result = originalSet(...)
-                                        if self.AutoSave then
-                                                self.AutoSave.PendingChanges = true
-                                        end
-                                        return result
-                                end
-                        end
-                end
-        end
-        
-        -- Initialize mobile UI if on a mobile device
-        if OrionLib.Mobile.Enabled and OrionLib.Mobile.ToggleVisible then
-                -- Will find the main window once it's created and initialize the toggle button later
-                -- This ensures proper window reference and visibility settings
-                -- The actual initialization happens in MakeWindow function after the window is created
-                
-                -- Notify user about mobile mode
-                OrionLib:MakeNotification({
-                    Name = "Mobile Mode",
-                    Content = "Interface optimized for touch. A toggle button will appear.",
-                    Image = "rbxassetid://7733960612", -- Menu icon
-                    Time = 5
-                })
-        end
+        end     
 end     
 
 function OrionLib:MakeWindow(WindowConfig)
@@ -1105,8 +603,7 @@ function OrionLib:MakeWindow(WindowConfig)
                 Parent = Orion,
                 Position = UDim2.new(0.5, -307, 0.5, -172),
                 Size = UDim2.new(0, 615, 0, 344),
-                ClipsDescendants = true,
-                Name = "MainWindow"
+                ClipsDescendants = true
         }), {
                 --SetProps(MakeElement("Image", "rbxassetid://3523728077"), {
                 --      AnchorPoint = Vector2.new(0.5, 0.5),
@@ -1256,27 +753,7 @@ function OrionLib:MakeWindow(WindowConfig)
 
         if WindowConfig.IntroEnabled then
                 LoadSequence()
-        end
-        
-        -- Initialize mobile UI if on a mobile device (after window is created)
-        if OrionLib.Mobile.Enabled and OrionLib.Mobile.ToggleVisible then
-                -- Store reference to main window
-                OrionLib.Mobile.MainWindow = MainWindow
-                
-                -- Create toggle button
-                local toggleButton = OrionLib.Mobile:CreateToggleButton(MainWindow)
-                
-                -- Set window visibility based on initial setting
-                MainWindow.Visible = OrionLib.Mobile.WindowVisible
-                
-                -- Notify user about mobile mode toggle
-                OrionLib:MakeNotification({
-                    Name = "Mobile Controls",
-                    Content = "Use the menu button to show/hide the interface",
-                    Image = "rbxassetid://7733960612", -- Menu icon
-                    Time = 3
-                })
-        end
+        end     
 
         local TabFunction = {}
         function TabFunction:MakeTab(TabConfig)
@@ -1550,6 +1027,13 @@ function OrionLib:MakeWindow(WindowConfig)
                                 return Toggle
                         end  
                         function ElementFunction:AddSlider(SliderConfig)
+                                -- Support both table and direct parameter formats
+                                if type(SliderConfig) == "string" then
+                                    SliderConfig = {
+                                        Name = SliderConfig
+                                    }
+                                end
+                                
                                 SliderConfig = SliderConfig or {}
                                 SliderConfig.Name = SliderConfig.Name or "Slider"
                                 SliderConfig.Min = SliderConfig.Min or 0
@@ -1564,6 +1048,8 @@ function OrionLib:MakeWindow(WindowConfig)
 
                                 local Slider = {Value = SliderConfig.Default, Save = SliderConfig.Save}
                                 local Dragging = false
+                                local DragConnection = nil
+                                local InputEndedConnection = nil
 
                                 local SliderDrag = SetChildren(SetProps(MakeElement("RoundFrame", SliderConfig.Color, 0, 5), {
                                         Size = UDim2.new(0, 0, 1, 0),
@@ -1610,38 +1096,139 @@ function OrionLib:MakeWindow(WindowConfig)
                                         AddThemeObject(MakeElement("Stroke"), "Stroke"),
                                         SliderBar
                                 }), "Second")
+                                
+                                local function StartDragging()
+                                    Dragging = true
+                                    
+                                    -- Create a new connection for drag movement
+                                    if DragConnection then
+                                        DragConnection:Disconnect()
+                                    end
+                                    
+                                    DragConnection = UserInputService.InputChanged:Connect(function(Input)
+                                        if Dragging and Input.UserInputType == Enum.UserInputType.MouseMovement then 
+                                            local SizeScale = math.clamp((Input.Position.X - SliderBar.AbsolutePosition.X) / SliderBar.AbsoluteSize.X, 0, 1)
+                                            Slider:Set(SliderConfig.Min + ((SliderConfig.Max - SliderConfig.Min) * SizeScale)) 
+                                            
+                                            -- Save config if available
+                                            if SaveCfg and Slider.Save then
+                                                SaveCfg(game.GameId)
+                                            end
+                                        end
+                                    end)
+                                    
+                                    -- Create a new connection for ending drag
+                                    if InputEndedConnection then
+                                        InputEndedConnection:Disconnect()
+                                    end
+                                    
+                                    InputEndedConnection = UserInputService.InputEnded:Connect(function(Input)
+                                        if Input.UserInputType == Enum.UserInputType.MouseButton1 then
+                                            Dragging = false
+                                            
+                                            if DragConnection then
+                                                DragConnection:Disconnect()
+                                                DragConnection = nil
+                                            end
+                                            
+                                            if InputEndedConnection then
+                                                InputEndedConnection:Disconnect()
+                                                InputEndedConnection = nil
+                                            end
+                                        end
+                                    end)
+                                end
 
                                 SliderBar.InputBegan:Connect(function(Input)
-                                        if Input.UserInputType == Enum.UserInputType.MouseButton1 then 
-                                                Dragging = true 
-                                        end 
-                                end)
-                                SliderBar.InputEnded:Connect(function(Input) 
-                                        if Input.UserInputType == Enum.UserInputType.MouseButton1 then 
-                                                Dragging = false 
-                                        end 
+                                    if Input.UserInputType == Enum.UserInputType.MouseButton1 then 
+                                        StartDragging()
+                                        
+                                        -- Also set slider to current mouse position immediately
+                                        local SizeScale = math.clamp((Input.Position.X - SliderBar.AbsolutePosition.X) / SliderBar.AbsoluteSize.X, 0, 1)
+                                        Slider:Set(SliderConfig.Min + ((SliderConfig.Max - SliderConfig.Min) * SizeScale))
+                                    end 
                                 end)
 
-                                UserInputService.InputChanged:Connect(function(Input)
-                                        if Dragging and (Input.UserInputType == Enum.UserInputType.MouseMovement or Input.UserInputType == Enum.UserInputType.Touch) then 
-                                                local SizeScale = math.clamp((Input.Position.X - SliderBar.AbsolutePosition.X) / SliderBar.AbsoluteSize.X, 0, 1)
-                                                Slider:Set(SliderConfig.Min + ((SliderConfig.Max - SliderConfig.Min) * SizeScale)) 
-                                                SaveCfg(game.GameId)
+                                -- Add click detection to the main slider frame too
+                                SliderFrame.InputBegan:Connect(function(Input)
+                                    if Input.UserInputType == Enum.UserInputType.MouseButton1 then
+                                        -- Only process if click is in the bar area
+                                        local RelativeY = Input.Position.Y - SliderFrame.AbsolutePosition.Y
+                                        if RelativeY >= 30 and RelativeY <= 56 then -- Height of bar is 26, positioned at Y=30
+                                            StartDragging()
+                                            
+                                            -- Also set slider to current mouse position immediately
+                                            local SizeScale = math.clamp((Input.Position.X - SliderBar.AbsolutePosition.X) / SliderBar.AbsoluteSize.X, 0, 1)
+                                            Slider:Set(SliderConfig.Min + ((SliderConfig.Max - SliderConfig.Min) * SizeScale))
                                         end
+                                    end
                                 end)
 
                                 function Slider:Set(Value)
-                                        self.Value = math.clamp(Round(Value, SliderConfig.Increment), SliderConfig.Min, SliderConfig.Max)
-                                        TweenService:Create(SliderDrag,TweenInfo.new(.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),{Size = UDim2.fromScale((self.Value - SliderConfig.Min) / (SliderConfig.Max - SliderConfig.Min), 1)}):Play()
-                                        SliderBar.Value.Text = tostring(self.Value) .. " " .. SliderConfig.ValueName
-                                        SliderDrag.Value.Text = tostring(self.Value) .. " " .. SliderConfig.ValueName
-                                        SliderConfig.Callback(self.Value)
+                                    -- Make sure we have the Round function
+                                    local function Round(Value, Increment)
+                                        if Increment then
+                                            return math.floor(Value / Increment + 0.5) * Increment
+                                        else
+                                            return math.floor(Value + 0.5)
+                                        end
+                                    end
+                                    
+                                    self.Value = math.clamp(Round(Value, SliderConfig.Increment), SliderConfig.Min, SliderConfig.Max)
+                                    local ScaleValue = (self.Value - SliderConfig.Min) / (SliderConfig.Max - SliderConfig.Min)
+                                    
+                                    -- Avoid divide by zero errors
+                                    if SliderConfig.Max - SliderConfig.Min == 0 then 
+                                        ScaleValue = 0 
+                                    end
+                                    
+                                    -- Create the tween with error handling
+                                    pcall(function()
+                                        TweenService:Create(SliderDrag, TweenInfo.new(.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                                            Size = UDim2.fromScale(ScaleValue, 1)
+                                        }):Play()
+                                    end)
+                                    
+                                    -- Update text values with error handling
+                                    local ValueText = tostring(self.Value) .. " " .. SliderConfig.ValueName
+                                    pcall(function() SliderBar.Value.Text = ValueText end)
+                                    pcall(function() SliderDrag.Value.Text = ValueText end)
+                                    
+                                    -- Call the callback
+                                    task.spawn(function() 
+                                        pcall(SliderConfig.Callback, self.Value) 
+                                    end)
                                 end      
 
                                 Slider:Set(Slider.Value)
                                 if SliderConfig.Flag then                               
                                         OrionLib.Flags[SliderConfig.Flag] = Slider
                                 end
+                                
+                                -- Add cleanup method
+                                function Slider:Destroy()
+                                    -- Disconnect any active connections
+                                    if DragConnection then
+                                        DragConnection:Disconnect()
+                                        DragConnection = nil
+                                    end
+                                    
+                                    if InputEndedConnection then
+                                        InputEndedConnection:Disconnect()
+                                        InputEndedConnection = nil
+                                    end
+                                    
+                                    -- Remove from OrionLib.Flags if exists
+                                    if SliderConfig.Flag and OrionLib.Flags[SliderConfig.Flag] == Slider then
+                                        OrionLib.Flags[SliderConfig.Flag] = nil
+                                    end
+                                    
+                                    -- Destroy the UI elements
+                                    if SliderFrame then
+                                        SliderFrame:Destroy()
+                                    end
+                                end
+                                
                                 return Slider
                         end  
                         function ElementFunction:AddDropdown(DropdownConfig)
@@ -2279,257 +1866,8 @@ function OrionLib:MakeWindow(WindowConfig)
         return TabFunction
 end   
 
--- AutoSave functionality 
-function OrionLib:InitAutoSave()
-    self.AutoSave = {
-        PendingChanges = false, 
-        LastSave = tick(),
-        LastBackup = tick(),
-        SaveInterval = 30, -- Save every 30 seconds if changes are made
-        BackupInterval = 300 -- Backup every 5 minutes
-    }
-    
-    -- Create auto-save loop
-    spawn(function()
-        while true do
-            wait(5) -- Check every 5 seconds
-            
-            local currentTime = tick()
-            
-            -- Regular save if changes pending and save interval passed
-            if self.AutoSave.PendingChanges and (currentTime - self.AutoSave.LastSave) > self.AutoSave.SaveInterval then
-                pcall(function()
-                    if self.SaveCfg then
-                        self:SaveCfg(game.GameId)
-                        self.AutoSave.LastSave = currentTime
-                        self.AutoSave.PendingChanges = false
-                    end
-                end)
-            end
-            
-            -- Create backup if backup interval passed
-            if (currentTime - self.AutoSave.LastBackup) > self.AutoSave.BackupInterval then
-                pcall(function()
-                    if self.SaveCfg then
-                        -- Create backup with timestamp
-                        local timestamp = os.date("%Y%m%d_%H%M%S")
-                        local backupName = game.GameId .. "_backup_" .. timestamp
-                        self:SaveCfg(backupName)
-                        self.AutoSave.LastBackup = currentTime
-                    end
-                end)
-            end
-        end
-    end)
-end
-
--- Mark config as changed for auto-save
-function OrionLib:MarkChangesForSave()
-    if self.AutoSave then
-        self.AutoSave.PendingChanges = true
-    end
-end
-
--- Animation presets system
-function OrionLib:SetupAnimations()
-    self.AnimationPresets = {
-        -- Tab animations
-        TabSelect = function(tab, container)
-            -- Slide and fade animation
-            container.Position = UDim2.new(0, 160, 0, 50) -- Slightly offset
-            container.BackgroundTransparency = 0.1
-            container.Visible = true
-            
-            -- Create smooth animation
-            TweenService:Create(container, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {
-                Position = UDim2.new(0, 150, 0, 50),
-                BackgroundTransparency = 0
-            }):Play()
-        end,
-        
-        -- Button animation
-        ButtonPress = function(button)
-            -- Quick scale down and up effect
-            TweenService:Create(button, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-                Size = UDim2.new(button.Size.X.Scale, button.Size.X.Offset - 1, button.Size.Y.Scale, button.Size.Y.Offset - 1),
-                Position = UDim2.new(button.Position.X.Scale, button.Position.X.Offset + 0.5, button.Position.Y.Scale, button.Position.Y.Offset + 0.5)
-            }):Play()
-            
-            wait(0.15)
-            
-            TweenService:Create(button, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                Size = UDim2.new(button.Size.X.Scale, button.Size.X.Offset + 1, button.Size.Y.Scale, button.Size.Y.Offset + 1),
-                Position = UDim2.new(button.Position.X.Scale, button.Position.X.Offset - 0.5, button.Position.Y.Scale, button.Position.Y.Offset - 0.5)
-            }):Play()
-        end,
-        
-        -- Notification animations
-        NotificationIn = function(notif)
-            notif.Position = UDim2.new(1, -55, 0, 0)
-            notif.Visible = true
-            TweenService:Create(notif, TweenInfo.new(0.5, Enum.EasingStyle.Quint), {
-                Position = UDim2.new(0, 0, 0, 0)
-            }):Play()
-        end,
-        
-        NotificationOut = function(notif)
-            TweenService:Create(notif.Icon, TweenInfo.new(0.4, Enum.EasingStyle.Quint), {
-                ImageTransparency = 1 
-            }):Play()
-            
-            TweenService:Create(notif, TweenInfo.new(0.5, Enum.EasingStyle.Quint), {
-                BackgroundTransparency = 0.6 
-            }):Play()
-            
-            TweenService:Create(notif.UIStroke, TweenInfo.new(0.5, Enum.EasingStyle.Quint), {
-                Transparency = 0.9 
-            }):Play()
-            
-            -- Stagger fade animations for title and content
-            wait(0.15)
-            TweenService:Create(notif.Title, TweenInfo.new(0.4, Enum.EasingStyle.Quint), {
-                TextTransparency = 0.4 
-            }):Play()
-            
-            wait(0.1)
-            TweenService:Create(notif.Content, TweenInfo.new(0.4, Enum.EasingStyle.Quint), {
-                TextTransparency = 0.5 
-            }):Play()
-            
-            -- Slide animation
-            wait(0.15)
-            notif:TweenPosition(UDim2.new(1, 20, 0, 0), 'Out', 'Quint', 0.5, true)
-        end,
-        
-        -- Window animation
-        WindowOpen = function(window)
-            window.Visible = true
-            window.BackgroundTransparency = 0.1
-            window.Position = UDim2.new(0.5, -307, 0.55, -172) -- Slightly offset
-            
-            TweenService:Create(window, TweenInfo.new(0.6, Enum.EasingStyle.Quint), {
-                BackgroundTransparency = 0,
-                Position = UDim2.new(0.5, -307, 0.5, -172) -- Original position
-            }):Play()
-        end
-    }
-end
-
--- Mobile support functions
-function OrionLib.Mobile:DetectMobile()
-    local UserInputService = game:GetService("UserInputService")
-    return UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
-end
-
-function OrionLib.Mobile:SetToggleVisibility(visible)
-    self.ToggleVisible = visible
-end
-
-function OrionLib.Mobile:SetTogglePosition(position)
-    if position == "TopRight" or position == "TopLeft" or position == "BottomRight" or position == "BottomLeft" then
-        self.TogglePosition = position
-    else
-        warn("Invalid toggle position. Use: TopRight, TopLeft, BottomRight, or BottomLeft")
-    end
-end
-
-function OrionLib.Mobile:CreateToggleButton(mainFrame)
-    if self.ToggleButton then return self.ToggleButton end
-    
-    local ToggleButton = Create("ImageButton", {
-        Name = "MobileToggle",
-        Size = UDim2.new(0, 40, 0, 40),
-        Position = UDim2.new(0.95, -20, 0.05, 0),
-        AnchorPoint = Vector2.new(1, 0),
-        BackgroundColor3 = OrionLib.Themes[OrionLib.SelectedTheme].Accent,
-        BackgroundTransparency = 0.2,
-        Image = GetIcon("menu") or "rbxassetid://7733960612",
-        ImageColor3 = Color3.fromRGB(255, 255, 255),
-        ImageTransparency = 0,
-        AutoButtonColor = false,
-        Visible = self.ToggleVisible,
-        Parent = Orion
-    })
-    
-    Create("UICorner", {
-        CornerRadius = UDim.new(1, 0),
-        Parent = ToggleButton
-    })
-    
-    -- Position the toggle button based on the configured position
-    if self.TogglePosition == "TopRight" then
-        ToggleButton.Position = UDim2.new(0.95, -20, 0.05, 0)
-        ToggleButton.AnchorPoint = Vector2.new(1, 0)
-    elseif self.TogglePosition == "TopLeft" then
-        ToggleButton.Position = UDim2.new(0.05, 20, 0.05, 0)
-        ToggleButton.AnchorPoint = Vector2.new(0, 0)
-    elseif self.TogglePosition == "BottomRight" then
-        ToggleButton.Position = UDim2.new(0.95, -20, 0.95, 0)
-        ToggleButton.AnchorPoint = Vector2.new(1, 1)
-    elseif self.TogglePosition == "BottomLeft" then
-        ToggleButton.Position = UDim2.new(0.05, 20, 0.95, 0)
-        ToggleButton.AnchorPoint = Vector2.new(0, 1)
-    end
-    
-    -- Create a drop shadow
-    local Shadow = Create("ImageLabel", {
-        Name = "Shadow",
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        BackgroundTransparency = 1,
-        Position = UDim2.new(0.5, 0, 0.5, 0),
-        Size = UDim2.new(1, 10, 1, 10),
-        ZIndex = -1,
-        Image = "rbxassetid://6014261993", -- Drop shadow image
-        ImageColor3 = Color3.fromRGB(0, 0, 0),
-        ImageTransparency = 0.5,
-        Parent = ToggleButton
-    })
-    
-    -- Add toggle functionality to the button
-    local mainWindow = mainFrame
-    
-    ToggleButton.MouseButton1Click:Connect(function()
-        self.WindowVisible = not self.WindowVisible
-        if mainWindow then
-            mainWindow.Visible = self.WindowVisible
-        end
-        
-        -- Rotate animation for toggle button
-        TweenService:Create(ToggleButton, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            Rotation = self.WindowVisible and 90 or 0
-        }):Play()
-    end)
-    
-    self.ToggleButton = ToggleButton
-    return ToggleButton
-end
-
--- Additional touch input for sliders
-function OrionLib:EnhanceSliderWithTouchSupport(slider, input, min, max, increment, callback)
-    slider.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.Touch then
-            local posX = input.Position.X - slider.AbsolutePosition.X
-            local percentage = math.clamp(posX / slider.AbsoluteSize.X, 0, 1)
-            local value = Round(math.floor(min + (max - min) * percentage), increment)
-            callback(value)
-        end
-    end)
-    
-    slider.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.Touch then
-            local posX = input.Position.X - slider.AbsolutePosition.X
-            local percentage = math.clamp(posX / slider.AbsoluteSize.X, 0, 1)
-            local value = Round(math.floor(min + (max - min) * percentage), increment)
-            callback(value)
-        end
-    end)
-end
-
 function OrionLib:Destroy()
         Orion:Destroy()
 end
-
--- Initialize the animation system
-OrionLib:SetupAnimations()
 
 return OrionLib

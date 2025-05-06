@@ -1,4 +1,4 @@
-aaaa
+
 
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
@@ -870,79 +870,16 @@ function OrionLib:MakeWindow(WindowConfig)
                 TweenService:Create(LoadSequenceText, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextTransparency = 1}):Play()
                 
                 wait(0.3)
-                -- Apply enhanced window entry animation
-                -- Start position further away and with more transparency
-                MainWindow.Position = UDim2.new(0.5, -307, 0.7, -172) -- Start position lower
-                MainWindow.BackgroundTransparency = 1
+                -- Apply smooth window entry animation
+                MainWindow.Position = UDim2.new(0.5, -307, 0.6, -172) -- Start position slightly lower
+                MainWindow.BackgroundTransparency = 0.1
                 MainWindow.Visible = true
                 
-                -- Set initial state for child elements
-                for _, child in pairs(MainWindow:GetChildren()) do
-                    if child:IsA("Frame") and child.Name ~= "TopBar" then
-                        child.BackgroundTransparency = 1
-                    end
-                end
-                
-                -- Initial state for TopBar
-                if MainWindow:FindFirstChild("TopBar") then
-                    MainWindow.TopBar.BackgroundTransparency = 1
-                    
-                    -- Set initial states for TopBar elements
-                    for _, element in pairs(MainWindow.TopBar:GetChildren()) do
-                        if element:IsA("TextLabel") then
-                            element.TextTransparency = 1
-                        elseif element:IsA("ImageLabel") or element:IsA("ImageButton") then
-                            element.ImageTransparency = 1
-                        elseif element:IsA("Frame") then
-                            element.BackgroundTransparency = 1
-                        end
-                    end
-                end
-                
-                -- Main window animation with bounce effect
-                TweenService:Create(MainWindow, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+                -- Animate window entry
+                TweenService:Create(MainWindow, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
                     Position = UDim2.new(0.5, -307, 0.5, -172),
                     BackgroundTransparency = 0
                 }):Play()
-                
-                -- Animate TopBar with slight delay
-                delay(0.1, function()
-                    if MainWindow:FindFirstChild("TopBar") then
-                        TweenService:Create(MainWindow.TopBar, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-                            BackgroundTransparency = 0
-                        }):Play()
-                        
-                        -- Animate TopBar elements with staggered timing
-                        delay(0.05, function()
-                            for _, element in pairs(MainWindow.TopBar:GetChildren()) do
-                                if element:IsA("TextLabel") then
-                                    TweenService:Create(element, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-                                        TextTransparency = 0
-                                    }):Play()
-                                elseif element:IsA("ImageLabel") or element:IsA("ImageButton") then
-                                    TweenService:Create(element, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-                                        ImageTransparency = 0
-                                    }):Play()
-                                elseif element:IsA("Frame") then
-                                    TweenService:Create(element, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-                                        BackgroundTransparency = 0
-                                    }):Play()
-                                end
-                            end
-                        end)
-                    end
-                end)
-                
-                -- Animate remaining window elements
-                delay(0.2, function()
-                    for _, child in pairs(MainWindow:GetChildren()) do
-                        if child:IsA("Frame") and child.Name ~= "TopBar" then
-                            TweenService:Create(child, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-                                BackgroundTransparency = 0
-                            }):Play()
-                        end
-                    end
-                end)
                 
                 -- Clean up intro elements
                 LoadSequenceLogo:Destroy()
@@ -1009,133 +946,50 @@ function OrionLib:MakeWindow(WindowConfig)
                 end    
 
                 AddConnection(TabFrame.MouseButton1Click, function()
-                        -- If tab is already selected, don't do anything
-                        if TabFrame.Title.Font == Enum.Font.GothamBlack then return end
-                        
-                        -- Deselect all tabs with a smooth fade effect
                         for _, Tab in next, TabHolder:GetChildren() do
                                 if Tab:IsA("TextButton") then
                                         Tab.Title.Font = Enum.Font.GothamSemibold
-                                        
-                                        -- Create smoother tab deselection
-                                        TweenService:Create(Tab.Ico, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-                                                ImageTransparency = 0.4,
-                                                ImageColor3 = Color3.fromRGB(240, 240, 240)
-                                        }):Play()
-                                        
-                                        TweenService:Create(Tab.Title, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-                                                TextTransparency = 0.4,
-                                                Position = UDim2.new(0, 35, 0, 0) -- Reset any position changes
-                                        }):Play()
+                                        TweenService:Create(Tab.Ico, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {ImageTransparency = 0.4}):Play()
+                                        TweenService:Create(Tab.Title, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {TextTransparency = 0.4}):Play()
                                 end    
                         end
                         
-                        -- Hide all containers with enhanced fade and slide effect
+                        -- Hide all containers with fade effect
                         for _, ItemContainer in next, MainWindow:GetChildren() do
                                 if ItemContainer.Name == "ItemContainer" and ItemContainer.Visible then
                                         -- Store the current container that's being hidden
                                         local currentContainer = ItemContainer
                                         
-                                        -- Create fade out for child elements first (staggered effect)
-                                        for i, child in ipairs(currentContainer:GetChildren()) do
-                                                if child:IsA("Frame") then
-                                                        -- Only animate actual content elements
-                                                        TweenService:Create(child, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-                                                                BackgroundTransparency = 1,
-                                                                Position = UDim2.new(child.Position.X.Scale, child.Position.X.Offset - 10, child.Position.Y.Scale, child.Position.Y.Offset)
-                                                        }):Play()
-                                                end
-                                        end
+                                        -- Prepare the container for animation
+                                        TweenService:Create(currentContainer, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+                                                Position = UDim2.new(0, 140, 0, 50), -- Slide slightly to the left
+                                                BackgroundTransparency = 1 -- Fade out
+                                        }):Play()
                                         
-                                        -- Animate the container after a brief delay
-                                        delay(0.1, function()
-                                                TweenService:Create(currentContainer, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-                                                        Position = UDim2.new(0, 140, 0, 50), -- Slide to the left
-                                                        BackgroundTransparency = 1 -- Fade out
-                                                }):Play()
-                                        end)
-                                        
-                                        -- Hide after animation completes and reset properties
-                                        delay(0.4, function()
+                                        -- Hide after animation completes
+                                        delay(0.3, function()
                                                 currentContainer.Visible = false
                                                 currentContainer.Position = UDim2.new(0, 150, 0, 50) -- Reset position
                                                 currentContainer.BackgroundTransparency = 0 -- Reset transparency
-                                                
-                                                -- Reset all child elements
-                                                for _, child in ipairs(currentContainer:GetChildren()) do
-                                                        if child:IsA("Frame") then
-                                                                child.BackgroundTransparency = child.Name == "Divider" and 0.7 or 0
-                                                                -- Reset positions if they were modified
-                                                                if child.Position.X.Offset ~= child.Position.X.Offset then
-                                                                        child.Position = UDim2.new(child.Position.X.Scale, child.Position.X.Offset + 10, child.Position.Y.Scale, child.Position.Y.Offset)
-                                                                end
-                                                        end
-                                                end
                                         end)
                                 end    
                         end
                         
-                        -- Highlight the selected tab with enhanced animation
-                        TweenService:Create(TabFrame.Ico, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-                                ImageTransparency = 0,
-                                Size = UDim2.new(0, 22, 0, 22) -- Slightly larger icon for emphasis
-                        }):Play()
-                        
-                        -- Return icon to normal size after brief expansion
-                        delay(0.15, function()
-                                TweenService:Create(TabFrame.Ico, TweenInfo.new(0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-                                        Size = UDim2.new(0, 18, 0, 18)
-                                }):Play()
-                        end)
-                        
-                        -- Text animation
-                        TweenService:Create(TabFrame.Title, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-                                TextTransparency = 0,
-                                Position = UDim2.new(0, 37, 0, 0) -- Slight position shift for emphasis
-                        }):Play()
-                        
-                        -- Return text to normal position
-                        delay(0.2, function()
-                                TweenService:Create(TabFrame.Title, TweenInfo.new(0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-                                        Position = UDim2.new(0, 35, 0, 0)
-                                }):Play()
-                        end)
-                        
+                        -- Highlight the selected tab
+                        TweenService:Create(TabFrame.Ico, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {ImageTransparency = 0}):Play()
+                        TweenService:Create(TabFrame.Title, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {TextTransparency = 0}):Play()
                         TabFrame.Title.Font = Enum.Font.GothamBlack
                         
-                        -- Prepare container for enhanced entry animation
-                        Container.Position = UDim2.new(0, 170, 0, 50) -- Start further to the right for more motion
+                        -- Prepare container for entry animation
+                        Container.Position = UDim2.new(0, 160, 0, 50) -- Start slightly to the right
                         Container.BackgroundTransparency = 1
                         Container.Visible = true
                         
-                        -- Hide all child elements initially for sequential reveal
-                        for i, child in ipairs(Container:GetChildren()) do
-                                if child:IsA("Frame") then
-                                        child.BackgroundTransparency = 1
-                                        child.Position = UDim2.new(child.Position.X.Scale, child.Position.X.Offset + 10, child.Position.Y.Scale, child.Position.Y.Offset)
-                                end
-                        end
-                        
                         -- Animate container entry
-                        TweenService:Create(Container, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+                        TweenService:Create(Container, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
                                 Position = UDim2.new(0, 150, 0, 50), -- Final position
                                 BackgroundTransparency = 0 -- Final transparency
                         }):Play()
-                        
-                        -- Reveal child elements sequentially
-                        delay(0.1, function()
-                                for i, child in ipairs(Container:GetChildren()) do
-                                        if child:IsA("Frame") then
-                                                -- Stagger the animations slightly based on position in list
-                                                delay((i-1) * 0.03, function()
-                                                        TweenService:Create(child, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-                                                                BackgroundTransparency = child.Name == "Divider" and 0.7 or 0,
-                                                                Position = UDim2.new(child.Position.X.Scale, child.Position.X.Offset - 10, child.Position.Y.Scale, child.Position.Y.Offset)
-                                                        }):Play()
-                                                end)
-                                        end
-                                end
-                        end)
                 end)
 
                 local function GetElements(ItemParent)

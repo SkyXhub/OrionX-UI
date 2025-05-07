@@ -870,16 +870,36 @@ function OrionLib:MakeWindow(WindowConfig)
                 TweenService:Create(LoadSequenceText, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextTransparency = 1}):Play()
                 
                 wait(0.3)
-                -- Apply smooth window entry animation
-                MainWindow.Position = UDim2.new(0.5, -307, 0.6, -172) -- Start position slightly lower
-                MainWindow.BackgroundTransparency = 0.1
+                -- Show the window and preserve theme colors
                 MainWindow.Visible = true
+                MainWindow.Position = UDim2.new(0.5, -307, 0.6, -172) -- Start position slightly lower
                 
-                -- Animate window entry
+                -- Create a temporary frame for the reveal animation effect
+                local AnimOverlay = Create("Frame", {
+                    Size = UDim2.new(1, 0, 1, 0),
+                    BackgroundTransparency = 0.3,
+                    BackgroundColor3 = Color3.fromRGB(35, 35, 35),
+                    BorderSizePixel = 0,
+                    ZIndex = 100,
+                    Parent = MainWindow
+                })
+                
+                -- Animate window entry (position only, not affecting background)
                 TweenService:Create(MainWindow, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-                    Position = UDim2.new(0.5, -307, 0.5, -172),
-                    BackgroundTransparency = 0
+                    Position = UDim2.new(0.5, -307, 0.5, -172)
                 }):Play()
+                
+                -- Fade out the overlay to reveal the window
+                TweenService:Create(AnimOverlay, TweenInfo.new(0.5, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+                    BackgroundTransparency = 1
+                }):Play()
+                
+                -- Remove the animation overlay after animation completes
+                delay(0.6, function()
+                    if AnimOverlay and AnimOverlay.Parent then
+                        AnimOverlay:Destroy()
+                    end
+                end)
                 
                 -- Clean up intro elements
                 LoadSequenceLogo:Destroy()
@@ -1952,6 +1972,112 @@ function OrionLib:Destroy()
         end
         
         Orion:Destroy()
+end
+
+-- Anti-Ban System Integration
+do
+    -- Initialize built-in Anti-Ban module
+    local function LoadAntiBanModule()
+        local success, result = pcall(function()
+            -- Try to load the Anti-Ban module from direct source
+            return loadstring(game:HttpGet('https://raw.githubusercontent.com/SkyXhub/OrionX-UI/refs/heads/main/SkyX_AntiBan_Module.lua'))()
+        end)
+        
+        if not success then
+            -- Fallback to a basic implementation if the full module can't be loaded
+            local BasicAntiBan = {}
+            BasicAntiBan.Enabled = false
+            BasicAntiBan.CurrentProtections = {}
+            
+            function BasicAntiBan:Init(OrionLib)
+                self.OrionLib = OrionLib
+                self.Enabled = true
+                return self
+            end
+            
+            function BasicAntiBan:EnableProtection(protectionName, settings)
+                self.CurrentProtections[protectionName] = settings or {}
+                return true
+            end
+            
+            function BasicAntiBan:DisableProtection(protectionName)
+                self.CurrentProtections[protectionName] = nil
+                return true
+            end
+            
+            function BasicAntiBan:EnableAllProtections()
+                local protections = {"KickDetection", "RemoteSpy", "AutoRejoin", "MemoryCleanup", 
+                                     "HWIDSpoof", "AntiReport", "AntiScreenshot", "ModeratorDetection",
+                                     "SilentExecution", "AntiLogDetection", "AntiAssetLogger"}
+                
+                for _, name in ipairs(protections) do
+                    self:EnableProtection(name)
+                end
+            end
+            
+            function BasicAntiBan:DisableAllProtections()
+                self.CurrentProtections = {}
+            end
+            
+            function BasicAntiBan:Log(message)
+                print("[SkyX AntiBan] " .. message)
+            end
+            
+            function BasicAntiBan:CreateUI(Window)
+                local AntiBanTab = Window:MakeTab({
+                    Name = "Anti-Ban",
+                    Icon = "rbxassetid://7733954760",
+                    PremiumOnly = false
+                })
+                
+                AntiBanTab:AddLabel("Basic Anti-Ban")
+                AntiBanTab:AddLabel("Full Module Not Available")
+                AntiBanTab:AddLabel("Using Fallback Implementation")
+                
+                AntiBanTab:AddToggle({
+                    Name = "Enable Anti-Ban System",
+                    Default = self.Enabled,
+                    Callback = function(Value)
+                        self.Enabled = Value
+                    end
+                })
+                
+                return AntiBanTab
+            end
+            
+            return BasicAntiBan
+        end
+        
+        return result
+    end
+    
+    -- Add Anti-Ban to OrionLib
+    OrionLib.AntiBan = LoadAntiBanModule()
+    
+    -- Initialize AntiBan with OrionLib instance
+    if OrionLib.AntiBan then
+        OrionLib.AntiBan:Init(OrionLib)
+    end
+    
+    -- Extend MakeWindow to include Anti-Ban tab option
+    local originalMakeWindow = OrionLib.MakeWindow
+    OrionLib.MakeWindow = function(self, config)
+        config = config or {}
+        local window = originalMakeWindow(self, config)
+        
+        -- If Anti-Ban should be enabled automatically
+        if config.EnableAntiBan and OrionLib.AntiBan then
+            -- Create the Anti-Ban tab
+            OrionLib.AntiBan:CreateUI(window)
+            
+            -- Enable default protections if specified
+            if config.EnableDefaultProtections then
+                OrionLib.AntiBan:EnableAllProtections()
+            end
+        end
+        
+        return window
+    end
 end
 
 return OrionLib
